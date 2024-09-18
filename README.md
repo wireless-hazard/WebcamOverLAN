@@ -4,8 +4,14 @@ Simple application to stream the webcam over the Local Network using GStreamer o
 ## Building
 To build the application, run: 
 ```
-gcc main.cpp -o a.out `pkg-config --cflags --libs gstreamer-1.0`
+g++ main.cpp -o a.out `pkg-config --cflags --libs gstreamer-1.0`
 ```
+## Run
+Call the executable, passing as the command line argument the IP which will receive the stream
+```
+./a.out 127.0.0.1
+```
+
 ## Sending and receiving over the network using UDP
 The temporary pipeline using gst-launch to send and receive data over the network are:
 

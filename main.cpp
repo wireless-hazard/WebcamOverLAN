@@ -1,7 +1,11 @@
 #include <gst/gst.h>
+#include <string>
 
 int main (int argc, char *argv[])
 {
+    /* Takes the first argument to be used as the target IP to send the webcam stream*/
+    std::string target_ip{argv[1]};
+
     /* Initialize GStreamer */
     gst_init (&argc, &argv);
 
@@ -12,7 +16,7 @@ int main (int argc, char *argv[])
     GstElement *video_convert = gst_element_factory_make("videoconvert", "video_convert");
 
     /* Sets the IP:PORT to be used by the UDP socket*/
-    g_object_set(sink, "host", "127.0.0.1", "port", 5200, NULL);
+    g_object_set(sink, "host", target_ip.c_str(), "port", 5200, NULL);
 
     /* Create the empty pipeline */
     GstElement *pipeline = gst_pipeline_new("simple-pipeline");
