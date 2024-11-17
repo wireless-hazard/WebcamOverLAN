@@ -17,7 +17,7 @@ The temporary pipeline using gst-launch to send and receive data over the networ
 
 **Send**:
 ```
-gst-launch-1.0 -v v4l2src ! "video/x-raw,framerate=30/1" ! videoconvert ! rtpvrawpay ! udpsink host=127.0.0.1 port=5200
+gst-launch-1.0 -v v4l2src ! "video/x-raw,framerate=30/1" ! videoconvert ! videoscale ! "video/x-raw, width=240, height=240" ! rtpvrawpay ! udpsink host=127.0.0.1 port=5200
 ```
 
 **Receive**:

@@ -14,25 +14,27 @@ int main (int argc, char *argv[])
     GstElement *sink = gst_element_factory_make("udpsink", "sink");
     GstElement *rtpvrawpay_element = gst_element_factory_make("rtpvrawpay", nullptr);
     GstElement *video_convert = gst_element_factory_make("videoconvert", "video_convert");
+    /* Video scale it waaay down to achieve "Real-time" transmission*/
+    GstElement *video_scale = gst_element_factory_make("videoscale", nullptr);
 
     /* Sets the IP:PORT to be used by the UDP socket*/
-    g_object_set(sink, "host", target_ip.c_str(), "port", 5200, NULL);
+    g_object_set(sink, "host", target_ip.c_str(), "port", 5200, nullptr);
 
     /* Create the empty pipeline */
     GstElement *pipeline = gst_pipeline_new("simple-pipeline");
 
-    if (!pipeline || !source || !sink || !video_convert || !rtpvrawpay_element) {
+    if (!pipeline || !source || !sink || !video_convert || !video_scale || !rtpvrawpay_element) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
 
     /* Build the pipeline */
-    gst_bin_add_many(GST_BIN (pipeline), source, sink, video_convert, rtpvrawpay_element, nullptr);
+    gst_bin_add_many(GST_BIN (pipeline), source, sink, video_convert, video_scale, rtpvrawpay_element, nullptr);
 
+    /* Limits the webcam fps to 30 */
     GstCaps *caps = gst_caps_new_simple("video/x-raw",
         "framerate", GST_TYPE_FRACTION, 30, 1,
         nullptr);
-
     gboolean link_ok = gst_element_link_filtered (source, video_convert, caps);
     gst_caps_unref (caps);
 
@@ -40,8 +42,30 @@ int main (int argc, char *argv[])
         g_error ("Failed to link element1 and element2!");
     }
 
+    /* resolution for the videoscale */
+    GstCaps *caps_convert = gst_caps_new_simple("video/x-raw",
+        "width", G_TYPE_INT, 240,
+        "height", G_TYPE_INT, 240,
+        nullptr);
+
+    /* links videoscale to rtpvrawpay using the caps above */
+    link_ok = gst_element_link_filtered(video_scale, rtpvrawpay_element, caps_convert);
+    gst_caps_unref(caps_convert);
+
+    if (!link_ok) {
+        g_error ("Failed to link element1 and element2!");
+    }
+
+    /* links videoconvert to videoscale */
+    link_ok = gst_element_link(video_convert, video_scale);
+
+    if (!link_ok) {
+        g_error ("Failed to link element1 and element2!");
+    }
+
+    /* Missing link in the pipeline is connecting the rtpvrawpay to the sink*/
     /* Link all elements that can be automatically linked because they have "Always" pads */
-    if (gst_element_link_many(video_convert, rtpvrawpay_element, sink, nullptr) != TRUE) {
+    if (gst_element_link_many(rtpvrawpay_element, sink, nullptr) != TRUE) {
         g_printerr("Elements could not be linked.\n");
         gst_object_unref(pipeline);
         return -1;
