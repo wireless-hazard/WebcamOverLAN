@@ -38,3 +38,14 @@ gst-launch-1.0 -v v4l2src ! videoconvert  ! "video/x-raw, framerate=30/1" ! open
 ```
 gst-launch-1.0 udpsrc address=127.0.0.1 port=5200 ! h264parse ! openh264dec ! videoconvert ! queue ! autovideosink
 ```
+
+#### **Alternative way**
+**Send**
+```
+gst-launch-1.0 -v v4l2src ! videoscale ! "video/x-raw, width=240, height=240" ! videoconvert ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast ! rtph264pay ! udpsink port=5000 host=127.0.0.1
+```
+
+**Receive**
+```
+gst-launch-1.0 -v udpsrc port=5000 ! "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96" ! rtph264depay ! h264parse ! decodebin ! videoconvert ! autovideosink sync=false
+```
